@@ -1,0 +1,125 @@
+ROADMAP DE EXECUÇÃO — MVP FUNCIONAL
+
+OBJETIVO FINAL
+Transformar o protótipo atual em um sistema funcional capaz de criar usuários, armazenar dados financeiros, registrar transações, processar informações, gerar insights e alimentar o Feed Financeiro Inteligente.
+
+FASE 1 — INFRAESTRUTURA
+- Criar projeto Frontend
+- Criar projeto Backend
+- Configurar Banco de Dados
+- Configurar ambiente de desenvolvimento
+- Configurar Deploy
+- Configurar Git/GitHub
+- Configurar variáveis de ambiente
+
+FASE 2 — AUTENTICAÇÃO
+- Cadastro
+- Login
+- Recuperação de senha
+- JWT
+- Middleware
+- Rotas privadas
+
+FASE 3 — MODELAGEM DE DADOS
+- Users
+- Accounts
+- Categories
+- Transactions
+
+FASE 4 — PERFIL DO USUÁRIO
+- Visualizar perfil
+- Editar perfil
+- Alterar senha
+- Configurações básicas
+
+FASE 5 — CONTAS FINANCEIRAS
+- CRUD completo de contas
+- Conta bancária
+- Carteira
+- Dinheiro
+- Cartão
+
+FASE 6 — CATEGORIAS
+- Categorias padrão
+- CRUD completo
+
+FASE 7 — TRANSAÇÕES
+- Receitas
+- Despesas
+- Transferências
+- Edição
+- Exclusão
+- Filtros
+
+FASE 8 — DASHBOARD BÁSICO
+- Saldo Total
+- Receitas
+- Despesas
+- Economia
+- Indicadores
+
+FASE 9 — MOTOR FINANCEIRO
+- Totais
+- Comparações
+- Tendências
+- Processamentos financeiros
+
+FASE 10 — SISTEMA DE EVENTOS
+- Tabela Events
+- Geradores automáticos de eventos
+
+FASE 11 — FEED FINANCEIRO
+- Timeline
+- Cards
+- Alertas
+- Comparações
+- Resumos
+
+FASE 12 — IA FINANCEIRA
+- Classificação automática
+- Resumos
+- Insights
+- Recomendações
+
+FASE 13 — IMPORTAÇÃO DE DADOS
+- CSV
+- OFX
+- Processamento automático
+
+FASE 14 — OPEN FINANCE
+- Conexão bancária
+- Sincronização
+- Atualização automática
+
+FASE 15 — TESTES E ESTABILIZAÇÃO
+- Testes funcionais
+- Segurança
+- Performance
+- Correções
+
+MARCOS DE ENTREGA
+
+MARCO 1 — SISTEMA BASE
+Fases 1 a 7
+
+MARCO 2 — SISTEMA INTELIGENTE
+Fases 8 a 11
+
+MARCO 3 — DIFERENCIAL DO PRODUTO
+Fases 12 a 14
+
+ORDEM DE PRIORIDADE ABSOLUTA
+1. Infraestrutura
+2. Banco de Dados
+3. Autenticação
+4. Contas
+5. Categorias
+6. Transações
+7. Dashboard
+8. Motor Financeiro
+9. Eventos
+10. Feed
+11. IA
+12. Importação
+13. Open Finance
+14. Testes

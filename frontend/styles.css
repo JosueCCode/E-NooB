@@ -914,6 +914,36 @@ p {
   place-items: center;
 }
 
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 18px 0 14px;
+  border-radius: 8px;
+  background: var(--subtle);
+  border: 1px solid var(--line);
+}
+
+.auth-tabs .tab {
+  width: 100%;
+}
+
+.auth-error {
+  border: 1px solid var(--soft-red);
+  border-radius: var(--radius);
+  background: var(--soft-red);
+  color: var(--red);
+  padding: 11px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
 .phone-preview {
   width: min(390px, 100%);
   border-radius: 28px;

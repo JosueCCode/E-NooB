@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Account {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  name         String
+  type         AccountType
+  balance      Decimal       @default(0) @db.Decimal(14, 2)
+  institution  String?
+  transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Category {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  name         String
+  type         CategoryType
+  color        String?
+  icon         String?
+  isDefault    Boolean       @default(false) @map("is_default")
+  transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@unique([userId, name, type])
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id          String            @id @default(uuid()) @db.Uuid
+  userId      String            @map("user_id") @db.Uuid
+  accountId   String            @map("account_id") @db.Uuid
+  categoryId  String?           @map("category_id") @db.Uuid
+  type        TransactionType
+  amount      Decimal           @db.Decimal(14, 2)
+  description String
+  occurredAt  DateTime          @map("occurred_at")
+  status      TransactionStatus @default(CONFIRMED)
+  notes       String?
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category    Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([userId, occurredAt])
+  @@index([accountId])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  CREDIT_CARD
+  INVESTMENT
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+}

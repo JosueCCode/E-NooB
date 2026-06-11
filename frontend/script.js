@@ -1,8 +1,15 @@
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const API_BASE_URL = window.location.origin.startsWith("file")
+  || ["localhost", "127.0.0.1"].includes(window.location.hostname) && window.location.port !== "3001"
+  ? "http://localhost:3001"
+  : window.location.origin;
 
 const state = {
-  route: "feed",
+  route: "auth",
   auth: "login",
+  authLoading: false,
+  authError: "",
+  user: JSON.parse(localStorage.getItem("casa-clara-user") || "null"),
   modal: null,
   loading: false,
   transactionTab: "todas",
@@ -107,6 +114,76 @@ const goals = [
   ["Viagem em família", "R$ 2.100 de R$ 5.000", 42, "plane"],
   ["Trocar notebook", "R$ 1.320 de R$ 4.400", 30, "calculator"]
 ];
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || "Nao foi possivel concluir a acao");
+  }
+
+  return data;
+}
+
+function setAuthMode(mode) {
+  state.auth = mode;
+  state.authError = "";
+  render();
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const isSignup = state.auth === "cadastro";
+  const payload = {
+    email: String(formData.get("email") || "").trim(),
+    password: String(formData.get("password") || "")
+  };
+
+  if (isSignup) {
+    payload.name = String(formData.get("name") || "").trim();
+  }
+
+  state.authLoading = true;
+  state.authError = "";
+  render();
+
+  try {
+    const result = await apiRequest(isSignup ? "/api/auth/register" : "/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    localStorage.setItem("casa-clara-token", result.token);
+    localStorage.setItem("casa-clara-user", JSON.stringify(result.user));
+    state.user = result.user;
+    state.route = "feed";
+    state.authLoading = false;
+    render();
+    showToast(isSignup ? "Conta criada com sucesso" : "Login realizado");
+  } catch (error) {
+    state.authLoading = false;
+    state.authError = error.message;
+    render();
+  }
+}
+
+function logout() {
+  localStorage.removeItem("casa-clara-token");
+  localStorage.removeItem("casa-clara-user");
+  state.user = null;
+  state.route = "auth";
+  state.auth = "login";
+  state.authError = "";
+  render();
+}
 
 function setRoute(route) {
   state.route = route;
@@ -238,7 +315,7 @@ function appShell() {
           <small>Clareza do mês</small>
           <strong>82% organizado</strong>
           <div class="progress-track"><div class="progress-fill" style="width:82%"></div></div>
-          <button class="ghost-button full" onclick="setRoute('auth')">${icon("lock", "inline-icon")} Acessar login</button>
+          <button class="ghost-button full" onclick="logout()">${icon("lock", "inline-icon")} Sair</button>
         </div>
       </aside>
       <header class="top-mobile">
@@ -599,9 +676,44 @@ function modalContent(kind) {
   </div>`;
 }
 
+function authScreen2() {
+  const isLogin = state.auth === "login";
+  const isSignup = state.auth === "cadastro";
+  const title = isLogin ? "Entrar na Casa Clara" : "Criar sua conta";
+  const button = isLogin ? "Entrar" : "Criar conta";
+
+  return `
+    <main class="auth-screen">
+      <section class="auth-panel">
+        <div class="auth-logo brand">
+          <span class="brand-mark">CC</span>
+          <div><strong>Casa Clara</strong><span>feed inteligente de financas</span></div>
+        </div>
+        <div class="auth-tabs" role="tablist" aria-label="Acesso">
+          <button class="tab ${isLogin ? "active" : ""}" type="button" role="tab" aria-selected="${isLogin}" onclick="setAuthMode('login')">Login</button>
+          <button class="tab ${isSignup ? "active" : ""}" type="button" role="tab" aria-selected="${isSignup}" onclick="setAuthMode('cadastro')">Registrar</button>
+        </div>
+        <p class="eyebrow">${isSignup ? "Cadastro" : "Login"}</p>
+        <h1>${title}</h1>
+        <p>Veja sua rotina financeira como uma linha do tempo simples, visual e facil de consumir.</p>
+        <form class="form" onsubmit="handleAuthSubmit(event)">
+          ${isSignup ? `<label class="field"><span>Nome</span><input name="name" autocomplete="name" placeholder="Seu nome" required></label>` : ""}
+          <label class="field"><span>E-mail</span><input name="email" type="email" autocomplete="email" placeholder="voce@email.com" required></label>
+          <label class="field"><span>Senha</span><input name="password" type="password" autocomplete="${isSignup ? "new-password" : "current-password"}" minlength="8" placeholder="********" required></label>
+          ${state.authError ? `<div class="auth-error" role="alert">${state.authError}</div>` : ""}
+          <button class="primary-button full" type="submit" ${state.authLoading ? "disabled" : ""}>${state.authLoading ? "Aguarde..." : button}</button>
+        </form>
+      </section>
+      <section class="auth-art">
+        <div class="phone-preview"><div class="phone-screen">${feedCards.slice(0, 3).map(feedCard).join("")}</div></div>
+      </section>
+    </main>
+  `;
+}
+
 function render() {
   document.body.dataset.theme = state.theme;
-  document.querySelector("#app").innerHTML = state.route === "auth" ? authScreen() : appShell();
+  document.querySelector("#app").innerHTML = state.route === "auth" ? authScreen2() : appShell();
   if (state.modal) window.setTimeout(() => document.querySelector(".modal button, .modal input, .modal select, .modal textarea")?.focus(), 0);
 }
 
@@ -614,6 +726,9 @@ Object.assign(window, {
   showToast,
   openModal,
   closeModal,
+  setAuthMode,
+  handleAuthSubmit,
+  logout,
   setTheme,
   setTransactionTab,
   toggleState,

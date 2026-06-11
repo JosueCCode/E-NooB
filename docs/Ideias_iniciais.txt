@@ -1,0 +1,402 @@
+# PROMPT — CRIAÇÃO COMPLETA DE APP DE GESTÃO FINANCEIRA RESIDENCIAL
+
+Desenvolva uma interface COMPLETA, MODERNA e FUNCIONAL para um aplicativo multiplataforma (Mobile + Desktop) de GESTÃO FINANCEIRA RESIDENCIAL.
+
+O objetivo NÃO é criar um banco digital tradicional ou um dashboard empresarial.
+A proposta é criar uma experiência visual semelhante a um “feed inteligente de finanças”, onde o usuário acompanha sua vida financeira de forma leve, visual e dinâmica, quase como consumir conteúdo em uma rede social.
+
+---
+
+# OBJETIVO PRINCIPAL
+
+---
+
+Transformar dados financeiros complexos em uma experiência:
+
+* simples
+* visual
+* agradável
+* intuitiva
+* humana
+* fácil de entender
+
+O aplicativo deve:
+
+* conectar contas bancárias
+* ler movimentações financeiras
+* interpretar automaticamente os dados
+* resumir gastos e entradas
+* gerar análises automáticas
+* apresentar tudo em formato de FEED CRONOLÓGICO INTELIGENTE
+
+A experiência deve reduzir ansiedade financeira e aumentar clareza visual.
+
+---
+
+# CONCEITO CENTRAL
+
+---
+
+O usuário NÃO deve sentir que está usando:
+
+* planilhas
+* sistemas empresariais
+* dashboards técnicos
+* banco tradicional
+
+Ele deve sentir que:
+
+* está acompanhando sua rotina financeira
+* o app pensa por ele
+* o sistema traduz números em informações úteis
+* as análises são leves e rápidas de consumir
+
+A interface deve parecer:
+
+* premium
+* moderna
+* tecnológica
+* leve
+* elegante
+* inteligente
+
+Misturar referências de:
+
+* TikTok (estrutura de feed)
+* Nubank (minimalismo)
+* Spotify (organização visual)
+* Notion (respiro visual)
+* Duolingo (linguagem amigável)
+
+---
+
+# ESTRUTURA DA INTERFACE
+
+---
+
+## DESKTOP
+
+Estrutura em 3 colunas:
+
+### COLUNA ESQUERDA
+
+Menu lateral fixo:
+
+* Página principal
+* Resumo do dia
+* Calendário financeiro
+* Transações
+* Contas bancárias
+* Metas financeiras
+* Relatórios
+* Configurações
+
+Visual:
+
+* moderno
+* ícones minimalistas
+* azul principal elegante
+* cantos arredondados
+* leve efeito glassmorphism opcional
+
+---
+
+### COLUNA CENTRAL (PRINCIPAL)
+
+Feed financeiro cronológico.
+
+A área principal deve funcionar como:
+
+* timeline
+* feed vertical
+* cartões inteligentes
+
+O usuário deve rolar a tela para acompanhar os acontecimentos financeiros do dia.
+
+Cada card deve:
+
+* contar uma “história financeira”
+* explicar gastos
+* resumir movimentações
+* sugerir ações
+* usar linguagem humana
+
+Exemplos:
+
+* “Hoje você gastou mais com delivery.”
+* “Seu transporte aumentou 20%.”
+* “Você economizou comparado à semana passada.”
+* “Tudo certo! Seu saldo continua saudável.”
+
+Tipos de cards:
+
+* alerta
+* progresso
+* economia
+* comparação
+* resumo diário
+* meta concluída
+* dica financeira
+* comportamento incomum
+* previsão de saldo
+* análise automática
+
+Os cards devem possuir:
+
+* sombras suaves
+* muito espaçamento
+* bordas arredondadas
+* animações leves
+* hierarquia visual clara
+
+---
+
+### COLUNA DIREITA
+
+Painel auxiliar compacto.
+
+Mostrar:
+
+* saldo atual
+* entradas
+* saídas
+* categorias mais usadas
+* gráficos minimalistas
+* comparativos semanais
+* insights rápidos
+
+IMPORTANTE:
+Essa coluna NÃO deve roubar atenção do feed principal.
+
+---
+
+# MOBILE
+
+---
+
+Criar adaptação COMPLETA para celular.
+
+O feed deve ser o foco principal.
+
+A experiência mobile deve parecer:
+
+* fluida
+* viciante
+* confortável para scroll
+* extremamente limpa
+
+Menu:
+
+* inferior ou lateral recolhível
+
+Cards:
+
+* grandes
+* bem espaçados
+* leitura rápida
+* acessibilidade excelente
+
+---
+
+# IDENTIDADE VISUAL
+
+---
+
+Paleta obrigatória:
+
+Fundo:
+#F6F7FB
+
+Cards:
+#FFFFFF
+
+Texto principal:
+#1F2937
+
+Texto secundário:
+#6B7280
+
+Azul principal:
+#2563EB
+
+Verde:
+#16A34A
+
+Amarelo:
+#F59E0B
+
+Vermelho:
+#DC2626
+
+---
+
+# DIREÇÃO VISUAL
+
+---
+
+A interface deve ter:
+
+* minimalismo moderno
+* bastante espaço vazio
+* aparência premium
+* organização extrema
+* contraste suave
+* baixa fadiga visual
+
+Usar:
+
+* sombras suaves
+* ícones modernos
+* gráficos simples
+* componentes arredondados
+* tipografia elegante
+
+Tipografia sugerida:
+
+* Inter
+* Poppins
+* SF Pro
+* Manrope
+
+---
+
+# UX E EXPERIÊNCIA
+
+---
+
+Prioridade máxima:
+“VER ao invés de calcular.”
+
+O usuário deve entender:
+
+* para onde o dinheiro foi
+* quanto gastou
+* se está melhorando
+* se existe risco
+* se está evoluindo
+
+Tudo em poucos segundos.
+
+A IA deve interpretar os dados automaticamente.
+
+O sistema deve:
+
+* explicar
+* resumir
+* alertar
+* prever
+* incentivar
+
+---
+
+# CRIAR TODAS AS PÁGINAS
+
+---
+
+Criar TODAS as telas completas e conectadas:
+
+* Login
+* Cadastro
+* Recuperação de senha
+* Onboarding
+* Conexão bancária
+* Dashboard principal
+* Feed financeiro
+* Calendário financeiro
+* Metas
+* Relatórios
+* Perfil
+* Configurações
+* Segurança
+* Notificações
+* Planejamento financeiro
+* Tela de transações
+* Categorias
+* Assinatura premium
+* Central de ajuda
+* IA financeira
+* Insights automáticos
+* Comparativos mensais
+* Resumo diário
+* Resumo semanal
+* Resumo mensal
+
+Criar também:
+
+* estados vazios
+* loading
+* notificações
+* modais
+* popups
+* componentes reutilizáveis
+* animações
+* microinterações
+
+---
+
+# FUNCIONAMENTO
+
+---
+
+Todas as páginas devem:
+
+* funcionar visualmente
+* possuir navegação completa
+* ser interligadas
+* possuir lógica de UX coerente
+* parecer produto real pronto para produção
+
+Criar:
+
+* protótipo navegável
+* sistema de design
+* componentes reutilizáveis
+* responsividade total
+
+---
+
+# O QUE NÃO FAZER
+
+---
+
+NÃO:
+
+* transformar em painel empresarial
+* usar visual antigo
+* exagerar em cores
+* poluir a interface
+* criar excesso de gráficos
+* usar aparência de planilha
+* deixar a experiência fria
+* criar visual genérico de banco
+* fugir do conceito de feed inteligente
+
+Evitar:
+
+* sombras pesadas
+* excesso de texto
+* telas lotadas
+* aparência infantil
+* neon
+* excesso de animações
+
+---
+
+# RESULTADO FINAL ESPERADO
+
+---
+
+Entregar:
+
+* design completo
+* experiência premium
+* UI moderna
+* UX inteligente
+* sistema visual consistente
+* todas as telas
+* versão desktop
+* versão mobile
+* componentes organizados
+* protótipo profissional pronto para desenvolvimento
+
+O resultado deve parecer um produto real de startup moderna de tecnologia financeira.

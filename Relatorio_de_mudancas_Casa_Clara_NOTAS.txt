@@ -1,0 +1,246 @@
+﻿RELATÓRIO DE MUDANÇAS NECESSÁRIAS
+Projeto Casa Clara - app de gestão financeira residencial
+
+Resumo direto:
+O protótipo já tem boa direção visual e boa cobertura de telas, mas ainda está com cara de primeira versão. O próximo agente deve transformar os elementos decorativos em interações reais, corrigir português/encoding e elevar a interface para parecer produto final.
+
+
+CONTEXTO
+
+O projeto atual é um protótipo estático em HTML/CSS/JS puro para o app financeiro Casa Clara. A base está boa e já representa o conceito de "feed inteligente de finanças", leve e visual, não um dashboard empresarial.
+
+Ainda assim, ficaram para trás ajustes importantes de interface, navegação, texto, consistência e comportamento.
+
+
+1. CORRIGIR PROBLEMAS DE TEXTO E CODIFICAÇÃO
+
+Há textos com encoding quebrado em script.js, especialmente:
+
+- Alimentacao Â· hoje 12:31
+- Entrada Â· hoje 09:00
+- Transporte Â· ontem
+- Saude Â· ontem
+- Assinaturas Â· segunda
+- Placeholder de senha com â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢
+
+Trocar por caracteres corretos:
+
+- Alimentação · hoje 12:31
+- Entrada · hoje 09:00
+- Transporte · ontem
+- Saúde · ontem
+- Assinaturas · segunda
+- Senha com ••••••••
+
+Também revisar acentuação geral. O app está em português, mas muitos textos estão sem acento:
+
+- voce
+- financas
+- analise
+- terca-feira
+- saidas
+- proximas
+- conexao
+- seguranca
+- notificacoes
+
+Isso reduz bastante a percepção premium.
+
+
+2. AJUSTAR FLUXO INICIAL
+
+Hoje o estado inicial é:
+
+route: "feed"
+
+Isso faz o app abrir direto no dashboard, ignorando login/cadastro/recuperação.
+
+Decidir o fluxo correto:
+
+- Se for protótipo de produto completo, iniciar em auth.
+- Se for demonstração direta do app, manter feed, mas criar um caminho visível para acessar login/cadastro.
+
+Atualmente a tela de autenticação existe, mas está "escondida" atrás de:
+
+state.route === "auth"
+
+
+3. MELHORAR NAVEGAÇÃO ENTRE TODAS AS TELAS
+
+O prompt pede todas as telas completas e conectadas. A implementação tem muitas páginas, mas algumas só são acessíveis indiretamente:
+
+- premium
+- ajuda
+- seguranca
+- notificacoes
+- categorias
+- semanal
+- mensal
+- insights
+
+Recomendação:
+
+Adicionar caminhos mais claros dentro da interface, especialmente em configurações, perfil, relatórios e feed.
+
+O usuário não deve depender de ações escondidas em botões pequenos.
+
+
+4. CORRIGIR ABAS SEM FUNÇÃO
+
+Na tela de transações, as abas existem visualmente:
+
+- Todas
+- Entradas
+- Saídas
+- Pendentes
+
+Mas não filtram nada.
+
+Implementar estado de aba e filtro real nas transações.
+
+Do jeito atual, parece funcional, mas é apenas decorativo.
+
+
+5. TORNAR MODAIS MENOS GENÉRICOS
+
+Todos os modais usam praticamente os mesmos campos:
+
+- Nome
+- Tipo
+- Botão de ação
+
+Isso enfraquece o protótipo.
+
+Cada modal precisa ter campos coerentes:
+
+- Conectar banco: lista de bancos, consentimento, status Open Finance.
+- Nova transação: valor, categoria, data, recorrência.
+- Nova meta: valor-alvo, valor atual, prazo.
+- Perguntar para IA: textarea de pergunta.
+- Simulação: renda, contas previstas, limite por categoria.
+- Premium: plano, benefícios, preço, CTA.
+- Suporte: assunto, mensagem.
+
+
+6. SUBSTITUIR LETRAS POR ÍCONES REAIS
+
+A interface usa letras como ícones:
+
+- P
+- D
+- C
+- T
+- B
+- M
+- R
+- IA
+- U
+- S
+- N
+- ?
+- +
+- -
+- !
+
+Isso passa sensação de wireframe.
+
+Substituir por ícones reais, preferencialmente com biblioteca como Lucide Icons ou SVGs consistentes.
+
+Os botões principais também podem ganhar ícones para reforçar o aspecto de app moderno.
+
+
+7. REFINAR INTERFACE MOBILE
+
+O CSS já tem responsividade, mas precisa de revisão visual:
+
+- Checar se textos cabem nos cards e botões.
+- Garantir que a bottom nav não cubra conteúdo.
+- Garantir bom espaçamento entre feed e barras fixas.
+- Testar calendário no mobile, pois células podem ficar pequenas demais.
+- Verificar se os botões do header mobile não ficam apertados com o seletor de tema.
+
+
+8. EVITAR DUPLICAÇÃO ESTRANHA NO RESUMO MENSAL
+
+monthlyPage() renderiza reportsPage() inteiro dentro dela:
+
+${reportsPage()}
+
+Isso cria uma página dentro da outra, incluindo outro banner de relatórios.
+
+Melhor solução:
+
+Extrair só os componentes de gráfico/relatório ou criar uma seção específica de comparativo mensal.
+
+
+9. MELHORAR ESTADOS REAIS DE INTERAÇÃO
+
+Alguns elementos só mostram toast ou alternam classe localmente:
+
+- toggles de segurança/notificação
+- botão de "Salvar plano"
+- ações dos cards
+- tabs
+- conexão bancária
+- assinatura premium
+
+Adicionar estados simples no state para dar sensação real de produto:
+
+- banco conectado
+- plano salvo
+- categoria filtrada
+- notificação ativada/desativada
+- insight gerado no feed
+
+
+10. REVISAR ACESSIBILIDADE
+
+Pontos a ajustar:
+
+- Botões com letras devem ter aria-label claro.
+- Modais devem gerenciar foco e fechar com Esc.
+- Inputs precisam de labels associados corretamente.
+- Botões de toggle devem informar estado com aria-pressed ou role="switch".
+- Navegação ativa deve ter aria-current.
+
+
+11. MELHORAR HIERARQUIA VISUAL
+
+A base visual está limpa, mas pode ficar mais premium:
+
+- Feed central deve ser ainda mais protagonista.
+- Painel direito está correto em não roubar atenção, mas pode ter gráficos mais refinados.
+- Alguns cards parecem repetitivos; variar melhor composição, dados e ações.
+- Usar microinterações mais consistentes nos cards e botões.
+- Revisar espaçamentos internos para mobile e desktop.
+
+
+12. GIT/PROJETO
+
+Os três arquivos aparecem como não rastreados:
+
+- index.html
+- script.js
+- styles.css
+
+Antes de modificar, o agente deve confirmar se precisa inicializar versionamento/stage ou apenas editar os arquivos existentes.
+
+
+PRIORIDADE RECOMENDADA
+
+1. Corrigir textos, acentos e encoding.
+2. Ajustar fluxo inicial/login.
+3. Implementar filtros das abas.
+4. Personalizar modais.
+5. Substituir letras por ícones reais.
+6. Melhorar estados interativos.
+7. Revisar responsividade mobile.
+8. Corrigir duplicação do resumo mensal.
+9. Refinar acessibilidade e polimento visual.
+
+
+FECHAMENTO
+
+O protótipo já tem boa direção visual e boa cobertura de telas, mas ainda está com cara de primeira versão.
+
+O próximo agente deve transformar os elementos decorativos em interações reais, corrigir português/encoding e elevar a interface para parecer produto final.

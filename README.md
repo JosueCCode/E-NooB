@@ -23,7 +23,8 @@
 - `JWT_EXPIRES_IN`: validade do token, por padrao `7d`.
 - `CORS_ORIGIN`: origens permitidas separadas por virgula.
 - `PORT`: porta local da API, por padrao `3001`.
-- `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`: credenciais criadas pelo seed.
+- `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`: credenciais admin criadas pelo seed.
+- `CLIENT_NAME`, `CLIENT_EMAIL`, `CLIENT_PASSWORD`: credenciais cliente criadas pelo seed.
 
 ## Admin
 
@@ -33,8 +34,8 @@ O painel consome `/api/admin` e permite criar, editar e excluir `Users`, `Accoun
 
 Credencial local padrao do seed:
 
-- E-mail: `admin@casaclara.test`
-- Senha: `admin12345`
+- Admin: configure `ADMIN_EMAIL` e `ADMIN_PASSWORD` no ambiente antes de rodar o seed.
+- Cliente: `cliente@enoob.test` / `cliente12345`
 
 ## Prisma
 

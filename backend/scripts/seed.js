@@ -4,19 +4,21 @@ const bcrypt = require("bcryptjs");
 const { prisma } = require("../src/lib/prisma");
 
 async function main() {
-  const adminEmail = (process.env.ADMIN_EMAIL || "admin@casaclara.test").toLowerCase();
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@enoob.test").toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD || "admin12345";
+  const clientEmail = (process.env.CLIENT_EMAIL || "cliente@enoob.test").toLowerCase();
+  const clientPassword = process.env.CLIENT_PASSWORD || "cliente12345";
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {
-      name: process.env.ADMIN_NAME || "Admin Casa Clara",
+      name: process.env.ADMIN_NAME || "Administrador E-NooB",
       passwordHash,
       role: "ADMIN"
     },
     create: {
-      name: process.env.ADMIN_NAME || "Admin Casa Clara",
+      name: process.env.ADMIN_NAME || "Administrador E-NooB",
       email: adminEmail,
       passwordHash,
       role: "ADMIN"
@@ -24,12 +26,16 @@ async function main() {
   });
 
   const user = await prisma.user.upsert({
-    where: { email: "demo@casaclara.test" },
-    update: {},
+    where: { email: clientEmail },
+    update: {
+      name: process.env.CLIENT_NAME || "Cliente Teste",
+      passwordHash: await bcrypt.hash(clientPassword, 12),
+      role: "USER"
+    },
     create: {
-      name: "Familia Demo",
-      email: "demo@casaclara.test",
-      passwordHash: await bcrypt.hash("demo12345", 12),
+      name: process.env.CLIENT_NAME || "Cliente Teste",
+      email: clientEmail,
+      passwordHash: await bcrypt.hash(clientPassword, 12),
       role: "USER"
     }
   });
@@ -84,6 +90,7 @@ async function main() {
   });
 
   console.log(`Seed pronto. Admin: ${admin.email} / ${adminPassword}`);
+  console.log(`Cliente: ${user.email} / ${clientPassword}`);
 }
 
 main()

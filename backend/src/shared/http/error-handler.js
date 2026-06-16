@@ -3,11 +3,16 @@ function notFoundHandler(_req, res) {
 }
 
 function errorHandler(error, _req, res, _next) {
-  const status = error.status || (error.name === "ZodError" ? 400 : 500);
+  const prismaStatus = error.code === "P2025" ? 404 : ["P2002", "P2003"].includes(error.code) ? 400 : undefined;
+  const status = error.status || prismaStatus || (error.name === "ZodError" ? 400 : 500);
   const details = error.name === "ZodError" ? error.errors : undefined;
 
   res.status(status).json({
-    error: error.message || "Erro interno",
+    error: error.code === "P2002"
+      ? "Registro duplicado"
+      : error.code === "P2003"
+        ? "Registro relacionado invalido"
+        : error.message || "Erro interno",
     ...(details ? { details } : {})
   });
 }

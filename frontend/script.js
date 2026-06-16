@@ -5,7 +5,7 @@ const API_BASE_URL = window.location.origin.startsWith("file")
   : window.location.origin;
 
 const state = {
-  route: "auth",
+  route: window.location.pathname === "/admin" ? "admin" : "auth",
   auth: "login",
   authLoading: false,
   authError: "",
@@ -20,6 +20,14 @@ const state = {
   security: [true, true, false, false],
   notifications: [true, false, true, true, false],
   theme: localStorage.getItem("casa-clara-theme") || "light"
+};
+
+const adminState = {
+  loading: false,
+  error: "",
+  tab: "users",
+  editing: null,
+  data: { users: [], accounts: [], categories: [], transactions: [] }
 };
 
 const themes = [
@@ -116,10 +124,12 @@ const goals = [
 ];
 
 async function apiRequest(path, options = {}) {
+  const token = localStorage.getItem("casa-clara-token");
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {})
     }
   });
@@ -130,6 +140,21 @@ async function apiRequest(path, options = {}) {
   }
 
   return data;
+}
+
+async function adminLoad() {
+  adminState.loading = true;
+  adminState.error = "";
+  render();
+
+  try {
+    adminState.data = await apiRequest("/api/admin");
+  } catch (error) {
+    adminState.error = error.message;
+  } finally {
+    adminState.loading = false;
+    render();
+  }
 }
 
 function setAuthMode(mode) {
@@ -164,9 +189,15 @@ async function handleAuthSubmit(event) {
     localStorage.setItem("casa-clara-token", result.token);
     localStorage.setItem("casa-clara-user", JSON.stringify(result.user));
     state.user = result.user;
-    state.route = "feed";
     state.authLoading = false;
-    render();
+    if (window.location.pathname === "/admin") {
+      state.route = "admin";
+      render();
+      if (result.user.role === "ADMIN") await adminLoad();
+    } else {
+      state.route = "feed";
+      render();
+    }
     showToast(isSignup ? "Conta criada com sucesso" : "Login realizado");
   } catch (error) {
     state.authLoading = false;
@@ -179,13 +210,25 @@ function logout() {
   localStorage.removeItem("casa-clara-token");
   localStorage.removeItem("casa-clara-user");
   state.user = null;
-  state.route = "auth";
+  state.route = window.location.pathname === "/admin" ? "admin" : "auth";
   state.auth = "login";
   state.authError = "";
+  adminState.data = { users: [], accounts: [], categories: [], transactions: [] };
   render();
 }
 
 function setRoute(route) {
+  if (route === "admin") {
+    window.history.pushState({}, "", "/admin");
+    state.route = "admin";
+    adminLoad();
+    return;
+  }
+
+  if (window.location.pathname === "/admin") {
+    window.history.pushState({}, "", "/");
+  }
+
   state.route = route;
   state.loading = route !== "auth";
   render();
@@ -194,6 +237,83 @@ function setRoute(route) {
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, 220);
+}
+
+function adminSetTab(tab) {
+  adminState.tab = tab;
+  adminState.editing = null;
+  adminState.error = "";
+  render();
+}
+
+function adminStartEdit(resource, id) {
+  adminState.editing = { resource, id };
+  render();
+}
+
+function adminCancelEdit() {
+  adminState.editing = null;
+  render();
+}
+
+function adminOptions(resource, selected = "") {
+  return adminState.data[resource].map(item => {
+    const label = item.email || item.name || item.description;
+    return `<option value="${item.id}" ${item.id === selected ? "selected" : ""}>${label}</option>`;
+  }).join("");
+}
+
+function adminValue(item, key, fallback = "") {
+  if (!item) return fallback;
+  if (key === "occurredAt") return item[key] ? new Date(item[key]).toISOString().slice(0, 10) : fallback;
+  return item[key] ?? fallback;
+}
+
+async function adminSubmit(resource, event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
+  const editing = adminState.editing?.resource === resource ? adminState.editing : null;
+
+  if (!payload.password) delete payload.password;
+  if (payload.isDefault) payload.isDefault = true;
+  if (resource === "categories" && !payload.isDefault) payload.isDefault = false;
+
+  adminState.loading = true;
+  adminState.error = "";
+  render();
+
+  try {
+    await apiRequest(`/api/admin/${resource}${editing ? `/${editing.id}` : ""}`, {
+      method: editing ? "PUT" : "POST",
+      body: JSON.stringify(payload)
+    });
+    adminState.editing = null;
+    await adminLoad();
+    showToast(editing ? "Registro atualizado" : "Registro criado");
+  } catch (error) {
+    adminState.error = error.message;
+    adminState.loading = false;
+    render();
+  }
+}
+
+async function adminDelete(resource, id) {
+  if (!window.confirm("Excluir este registro?")) return;
+  adminState.loading = true;
+  adminState.error = "";
+  render();
+
+  try {
+    await apiRequest(`/api/admin/${resource}/${id}`, { method: "DELETE" });
+    await adminLoad();
+    showToast("Registro excluido");
+  } catch (error) {
+    adminState.error = error.message;
+    adminState.loading = false;
+    render();
+  }
 }
 
 function showToast(message) {
@@ -711,9 +831,156 @@ function authScreen2() {
   `;
 }
 
+function adminLoginScreen() {
+  return `
+    <main class="admin-screen">
+      <section class="auth-panel admin-login">
+        <div class="auth-logo brand">
+          <span class="brand-mark">AD</span>
+          <div><strong>Admin Casa Clara</strong><span>dados ficticios para testes</span></div>
+        </div>
+        <p class="eyebrow">Area protegida</p>
+        <h1>Entrar no admin</h1>
+        <p>Use um usuario com role ADMIN para gerenciar dados volateis do ambiente.</p>
+        <form class="form" onsubmit="handleAuthSubmit(event)">
+          <label class="field"><span>E-mail</span><input name="email" type="email" autocomplete="email" required></label>
+          <label class="field"><span>Senha</span><input name="password" type="password" autocomplete="current-password" required></label>
+          ${state.authError || adminState.error ? `<div class="auth-error" role="alert">${state.authError || adminState.error}</div>` : ""}
+          <button class="primary-button full" type="submit" ${state.authLoading ? "disabled" : ""}>${state.authLoading ? "Aguarde..." : "Entrar"}</button>
+        </form>
+      </section>
+    </main>
+  `;
+}
+
+function adminLayout() {
+  if (!state.user) return adminLoginScreen();
+  if (state.user.role !== "ADMIN") {
+    return `<main class="admin-screen"><section class="auth-panel admin-login"><h1>Acesso negado</h1><p>Seu usuario nao possui role ADMIN.</p><button class="primary-button" onclick="logout()">Sair</button></section></main>`;
+  }
+
+  const tabs = [
+    ["users", "Users"],
+    ["accounts", "Accounts"],
+    ["categories", "Categories"],
+    ["transactions", "Transactions"]
+  ];
+
+  return `
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div><p class="eyebrow">Admin</p><h1>CRUD de testes</h1><p>Dados ficticios no PostgreSQL via Prisma.</p></div>
+        <div class="button-row">
+          <button class="secondary-button" onclick="adminLoad()">Atualizar</button>
+          <button class="ghost-button" onclick="logout()">Sair</button>
+        </div>
+      </header>
+      ${adminState.error ? `<div class="auth-error" role="alert">${adminState.error}</div>` : ""}
+      <nav class="admin-tabs">${tabs.map(([id, label]) => `<button class="tab ${adminState.tab === id ? "active" : ""}" onclick="adminSetTab('${id}')">${label}</button>`).join("")}</nav>
+      ${adminState.loading ? loadingView() : adminResource(adminState.tab)}
+    </main>
+  `;
+}
+
+function adminResource(resource) {
+  const item = adminState.editing?.resource === resource
+    ? adminState.data[resource].find(row => row.id === adminState.editing.id)
+    : null;
+
+  return `
+    <section class="admin-grid">
+      <article class="info-card">
+        <h2>${item ? "Editar" : "Criar"} ${resource}</h2>
+        ${adminForm(resource, item)}
+      </article>
+      <article class="info-card admin-table-card">
+        <div class="section-header"><h2>Registros</h2><span class="mini-button">${adminState.data[resource].length}</span></div>
+        ${adminTable(resource)}
+      </article>
+    </section>
+  `;
+}
+
+function adminForm(resource, item) {
+  const forms = {
+    users: `
+      <form class="form" onsubmit="adminSubmit('users', event)">
+        <label class="field"><span>Nome</span><input name="name" value="${adminValue(item, "name")}" required></label>
+        <label class="field"><span>E-mail</span><input name="email" type="email" value="${adminValue(item, "email")}" required></label>
+        <label class="field"><span>Senha</span><input name="password" type="password" minlength="8" placeholder="${item ? "Manter senha atual" : "Minimo 8 caracteres"}" ${item ? "" : "required"}></label>
+        <label class="field"><span>Role</span><select name="role"><option ${adminValue(item, "role", "USER") === "USER" ? "selected" : ""}>USER</option><option ${adminValue(item, "role") === "ADMIN" ? "selected" : ""}>ADMIN</option></select></label>
+        ${adminFormActions()}
+      </form>`,
+    accounts: `
+      <form class="form" onsubmit="adminSubmit('accounts', event)">
+        <label class="field"><span>User</span><select name="userId" required>${adminOptions("users", adminValue(item, "userId"))}</select></label>
+        <label class="field"><span>Nome</span><input name="name" value="${adminValue(item, "name")}" required></label>
+        <label class="field"><span>Tipo</span><select name="type">${["CHECKING", "SAVINGS", "CASH", "CREDIT_CARD", "INVESTMENT"].map(v => `<option ${adminValue(item, "type", "CHECKING") === v ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+        <label class="field"><span>Saldo</span><input name="balance" type="number" step="0.01" value="${adminValue(item, "balance", 0)}"></label>
+        <label class="field"><span>Instituicao</span><input name="institution" value="${adminValue(item, "institution")}"></label>
+        ${adminFormActions()}
+      </form>`,
+    categories: `
+      <form class="form" onsubmit="adminSubmit('categories', event)">
+        <label class="field"><span>User</span><select name="userId" required>${adminOptions("users", adminValue(item, "userId"))}</select></label>
+        <label class="field"><span>Nome</span><input name="name" value="${adminValue(item, "name")}" required></label>
+        <label class="field"><span>Tipo</span><select name="type"><option ${adminValue(item, "type", "EXPENSE") === "EXPENSE" ? "selected" : ""}>EXPENSE</option><option ${adminValue(item, "type") === "INCOME" ? "selected" : ""}>INCOME</option></select></label>
+        <label class="field"><span>Cor</span><input name="color" value="${adminValue(item, "color", "#2563eb")}"></label>
+        <label class="field"><span>Icone</span><input name="icon" value="${adminValue(item, "icon", "cart")}"></label>
+        <label class="check-field"><input name="isDefault" type="checkbox" ${adminValue(item, "isDefault") ? "checked" : ""}> <span>Padrao</span></label>
+        ${adminFormActions()}
+      </form>`,
+    transactions: `
+      <form class="form" onsubmit="adminSubmit('transactions', event)">
+        <label class="field"><span>User</span><select name="userId" required>${adminOptions("users", adminValue(item, "userId"))}</select></label>
+        <label class="field"><span>Conta</span><select name="accountId" required>${adminOptions("accounts", adminValue(item, "accountId"))}</select></label>
+        <label class="field"><span>Categoria</span><select name="categoryId"><option value="">Sem categoria</option>${adminOptions("categories", adminValue(item, "categoryId"))}</select></label>
+        <label class="field"><span>Tipo</span><select name="type">${["INCOME", "EXPENSE", "TRANSFER"].map(v => `<option ${adminValue(item, "type", "EXPENSE") === v ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+        <label class="field"><span>Valor</span><input name="amount" type="number" step="0.01" value="${adminValue(item, "amount", 1)}" required></label>
+        <label class="field"><span>Descricao</span><input name="description" value="${adminValue(item, "description")}" required></label>
+        <label class="field"><span>Data</span><input name="occurredAt" type="date" value="${adminValue(item, "occurredAt", new Date().toISOString().slice(0, 10))}" required></label>
+        <label class="field"><span>Status</span><select name="status">${["PENDING", "CONFIRMED", "CANCELED"].map(v => `<option ${adminValue(item, "status", "CONFIRMED") === v ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+        <label class="field"><span>Notas</span><textarea name="notes">${adminValue(item, "notes")}</textarea></label>
+        ${adminFormActions()}
+      </form>`
+  };
+
+  return forms[resource];
+}
+
+function adminFormActions() {
+  return `<div class="button-row"><button class="primary-button" type="submit">Salvar</button>${adminState.editing ? `<button class="ghost-button" type="button" onclick="adminCancelEdit()">Cancelar</button>` : ""}</div>`;
+}
+
+function adminTable(resource) {
+  const rows = adminState.data[resource];
+  if (!rows.length) return emptyState("Sem registros", "Crie dados ficticios pelo formulario ao lado.");
+
+  return `<div class="admin-table">${rows.map(row => `
+    <div class="admin-row">
+      <div><strong>${row.email || row.name || row.description}</strong><small>${adminRowMeta(resource, row)}</small></div>
+      <div class="button-row">
+        <button class="mini-button" onclick="adminStartEdit('${resource}', '${row.id}')">Editar</button>
+        <button class="mini-button danger" onclick="adminDelete('${resource}', '${row.id}')">Excluir</button>
+      </div>
+    </div>
+  `).join("")}</div>`;
+}
+
+function adminRowMeta(resource, row) {
+  const map = {
+    users: `${row.role} · ${row.id}`,
+    accounts: `${row.type} · ${row.user?.email || row.userId}`,
+    categories: `${row.type} · ${row.user?.email || row.userId}`,
+    transactions: `${money.format(Number(row.amount))} · ${row.status} · ${row.account?.name || row.accountId}`
+  };
+
+  return map[resource];
+}
+
 function render() {
   document.body.dataset.theme = state.theme;
-  document.querySelector("#app").innerHTML = state.route === "auth" ? authScreen2() : appShell();
+  document.querySelector("#app").innerHTML = state.route === "admin" ? adminLayout() : state.route === "auth" ? authScreen2() : appShell();
   if (state.modal) window.setTimeout(() => document.querySelector(".modal button, .modal input, .modal select, .modal textarea")?.focus(), 0);
 }
 
@@ -734,8 +1001,15 @@ Object.assign(window, {
   toggleState,
   savePlan,
   completeModal,
+  adminLoad,
+  adminSetTab,
+  adminStartEdit,
+  adminCancelEdit,
+  adminSubmit,
+  adminDelete,
   render,
   state
 });
 
 render();
+if (state.route === "admin" && state.user?.role === "ADMIN") adminLoad();

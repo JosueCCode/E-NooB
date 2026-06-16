@@ -16,7 +16,7 @@ async function requireAuth(req, _res, next) {
     const payload = jwt.verify(token, env.JWT_SECRET);
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, name: true, email: true, createdAt: true, updatedAt: true }
+      select: { id: true, name: true, email: true, role: true, createdAt: true, updatedAt: true }
     });
 
     if (!user) {
@@ -33,4 +33,15 @@ async function requireAuth(req, _res, next) {
   }
 }
 
-module.exports = { requireAuth };
+function requireAdmin(req, _res, next) {
+  if (req.user?.role !== "ADMIN") {
+    const error = new Error("Acesso admin necessario");
+    error.status = 403;
+    next(error);
+    return;
+  }
+
+  next();
+}
+
+module.exports = { requireAuth, requireAdmin };

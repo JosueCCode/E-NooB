@@ -4,17 +4,17 @@
   "private": true,
   "type": "commonjs",
   "engines": {
-    "node": ">=20"
+    "node": ">=20 <25"
   },
   "scripts": {
     "dev": "node backend/src/server.js",
-    "check": "node --check backend/src/server.js",
+    "check": "node --check backend/src/server.js && node --check backend/src/app.js && node --check frontend/script.js",
     "db:generate": "prisma generate --schema database/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
     "db:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma",
     "db:seed": "node backend/scripts/seed.js",
     "start": "node backend/src/server.js",
-    "vercel-build": "npm run db:generate"
+    "vercel-build": "npm run db:generate && npm run check"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

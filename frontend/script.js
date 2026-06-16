@@ -980,8 +980,12 @@ function adminRowMeta(resource, row) {
 
 function render() {
   document.body.dataset.theme = state.theme;
-  document.querySelector("#app").innerHTML = state.route === "admin" ? adminLayout() : state.route === "auth" ? authScreen2() : appShell();
+  document.querySelector("#app").innerHTML = `${state.route === "admin" ? adminLayout() : state.route === "auth" ? authScreen2() : appShell()}${adminShortcut()}`;
   if (state.modal) window.setTimeout(() => document.querySelector(".modal button, .modal input, .modal select, .modal textarea")?.focus(), 0);
+}
+
+function adminShortcut() {
+  return `<a class="admin-shortcut" href="/admin" title="Abrir E-NooB ADM">E-NooB ADM</a>`;
 }
 
 document.addEventListener("keydown", event => {

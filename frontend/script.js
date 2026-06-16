@@ -19,6 +19,7 @@ const state = {
   generatedInsight: false,
   security: [true, true, false, false],
   notifications: [true, false, true, true, false],
+  tutorial: { active: false, index: 0 },
   theme: localStorage.getItem("casa-clara-theme") || "light"
 };
 
@@ -123,6 +124,49 @@ const goals = [
   ["Trocar notebook", "R$ 1.320 de R$ 4.400", 30, "calculator"]
 ];
 
+const tutorialSteps = [
+  {
+    route: "feed",
+    title: "Bem-vindo ao E-NooB",
+    text: "Este feed resume sua vida financeira em cards curtos, com alertas, previsoes e acoes rapidas.",
+    action: "Comecar tour"
+  },
+  {
+    route: "transacoes",
+    title: "Transacoes",
+    text: "Aqui voce acompanha entradas, saidas e pendencias. Use os filtros para entender o dinheiro por tipo.",
+    action: "Ver contas"
+  },
+  {
+    route: "contas",
+    title: "Contas conectadas",
+    text: "Organize saldos, instituicoes e fontes de dinheiro. No produto real, esta area pode receber integracoes bancarias.",
+    action: "Ver metas"
+  },
+  {
+    route: "metas",
+    title: "Metas financeiras",
+    text: "Crie objetivos para reserva, viagem ou compras importantes e acompanhe o progresso sem depender de planilhas.",
+    action: "Ver IA"
+  },
+  {
+    route: "ia",
+    title: "IA financeira",
+    text: "Faca perguntas em linguagem simples e receba sugestoes sobre limites, riscos e oportunidades de economia.",
+    action: "Ver configuracoes"
+  },
+  {
+    route: "configuracoes",
+    title: "Configuracoes",
+    text: "Ajuste seguranca, notificacoes, categorias e preferencias para deixar a experiencia com a sua cara.",
+    action: "Concluir"
+  }
+];
+
+function tutorialStorageKey(user = state.user) {
+  return user ? `casa-clara-tutorial-${user.id}` : "casa-clara-tutorial";
+}
+
 async function apiRequest(path, options = {}) {
   const token = localStorage.getItem("casa-clara-token");
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -196,6 +240,10 @@ async function handleAuthSubmit(event) {
       if (result.user.role === "ADMIN") await adminLoad();
     } else {
       state.route = "feed";
+      if (isSignup) {
+        state.tutorial = { active: true, index: 0 };
+        localStorage.removeItem(tutorialStorageKey(result.user));
+      }
       render();
     }
     showToast(isSignup ? "Conta criada com sucesso" : "Login realizado");
@@ -230,6 +278,7 @@ function setRoute(route) {
   }
 
   state.route = route;
+  state.tutorial.active = false;
   state.loading = route !== "auth";
   render();
   window.setTimeout(() => {
@@ -237,6 +286,43 @@ function setRoute(route) {
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, 220);
+}
+
+function startTutorial() {
+  state.route = tutorialSteps[0].route;
+  state.loading = false;
+  state.tutorial = { active: true, index: 0 };
+  render();
+}
+
+function nextTutorialStep() {
+  const nextIndex = state.tutorial.index + 1;
+  if (nextIndex >= tutorialSteps.length) {
+    finishTutorial();
+    return;
+  }
+
+  state.tutorial.index = nextIndex;
+  state.route = tutorialSteps[nextIndex].route;
+  state.loading = false;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function previousTutorialStep() {
+  if (state.tutorial.index <= 0) return;
+  state.tutorial.index -= 1;
+  state.route = tutorialSteps[state.tutorial.index].route;
+  state.loading = false;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function finishTutorial() {
+  state.tutorial = { active: false, index: 0 };
+  localStorage.setItem(tutorialStorageKey(), "done");
+  showToast("Tutorial concluido");
+  render();
 }
 
 function adminSetTab(tab) {
@@ -981,8 +1067,35 @@ function adminRowMeta(resource, row) {
 
 function render() {
   document.body.dataset.theme = state.theme;
-  document.querySelector("#app").innerHTML = `${state.route === "admin" ? adminLayout() : state.route === "auth" ? authScreen2() : appShell()}${adminShortcut()}`;
+  document.querySelector("#app").innerHTML = `${state.route === "admin" ? adminLayout() : state.route === "auth" ? authScreen2() : appShell()}${tutorialOverlay()}${adminShortcut()}`;
   if (state.modal) window.setTimeout(() => document.querySelector(".modal button, .modal input, .modal select, .modal textarea")?.focus(), 0);
+}
+
+function tutorialOverlay() {
+  if (!state.tutorial.active || state.route === "admin" || state.route === "auth") return "";
+
+  const step = tutorialSteps[state.tutorial.index];
+  const current = state.tutorial.index + 1;
+  const total = tutorialSteps.length;
+  const progress = Math.round((current / total) * 100);
+
+  return `
+    <div class="tutorial-layer" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+      <section class="tutorial-card">
+        <div class="tutorial-top">
+          <span class="tutorial-pill">Tutorial ${current}/${total}</span>
+          <button class="ghost-button" onclick="finishTutorial()">Pular</button>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <h2 id="tutorial-title">${step.title}</h2>
+        <p>${step.text}</p>
+        <div class="tutorial-actions">
+          <button class="ghost-button" onclick="previousTutorialStep()" ${state.tutorial.index === 0 ? "disabled" : ""}>Voltar</button>
+          <button class="primary-button" onclick="nextTutorialStep()">${step.action}</button>
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 function adminShortcut() {
@@ -1018,6 +1131,10 @@ document.addEventListener("keydown", event => {
 
 Object.assign(window, {
   setRoute,
+  startTutorial,
+  nextTutorialStep,
+  previousTutorialStep,
+  finishTutorial,
   showToast,
   openModal,
   closeModal,

@@ -1103,6 +1103,56 @@ button:disabled {
   transform: translateY(-1px);
 }
 
+.tutorial-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 18px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0 46%, rgba(17, 24, 39, 0.22));
+}
+
+.tutorial-card {
+  width: min(520px, calc(100vw - 36px));
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 20px 60px rgba(17, 24, 39, 0.22);
+  pointer-events: auto;
+}
+
+.tutorial-top,
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tutorial-pill {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--active);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tutorial-card h2 {
+  margin-top: 14px;
+}
+
+.tutorial-card .progress-track {
+  margin: 14px 0 0;
+}
+
 .loader {
   display: grid;
   gap: 10px;
@@ -1324,6 +1374,15 @@ button:disabled {
 
   .admin-shortcut {
     bottom: 82px;
+  }
+
+  .tutorial-layer {
+    align-items: end;
+    padding: 12px 12px 78px;
+  }
+
+  .tutorial-card {
+    width: 100%;
   }
 
   .admin-shell {

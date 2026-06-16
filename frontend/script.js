@@ -10,6 +10,8 @@ const state = {
   authLoading: false,
   authError: "",
   user: JSON.parse(localStorage.getItem("casa-clara-user") || "null"),
+  userData: { accounts: [], categories: [], transactions: [] },
+  dataError: "",
   modal: null,
   loading: false,
   transactionTab: "todas",
@@ -201,6 +203,53 @@ async function adminLoad() {
   }
 }
 
+async function loadUserData() {
+  if (!state.user || state.route === "admin") return;
+
+  state.dataError = "";
+  try {
+    const [accountsData, categoriesData, transactionsData] = await Promise.all([
+      apiRequest("/api/accounts"),
+      apiRequest("/api/categories"),
+      apiRequest("/api/transactions")
+    ]);
+
+    state.userData = {
+      accounts: accountsData.accounts || [],
+      categories: categoriesData.categories || [],
+      transactions: transactionsData.transactions || []
+    };
+  } catch (error) {
+    state.dataError = error.message;
+    state.userData = { accounts: [], categories: [], transactions: [] };
+  }
+}
+
+function accountBalanceTotal() {
+  return state.userData.accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+}
+
+function transactionAmountTotal(type) {
+  return state.userData.transactions
+    .filter(transaction => transaction.type === type)
+    .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+}
+
+function realTransactionRows() {
+  return state.userData.transactions.map(transaction => {
+    const amount = Number(transaction.amount || 0);
+    const signedAmount = transaction.type === "EXPENSE" ? -Math.abs(amount) : amount;
+    const occurredAt = transaction.occurredAt ? new Date(transaction.occurredAt).toLocaleDateString("pt-BR") : "sem data";
+    return {
+      name: transaction.description,
+      desc: `${transaction.category?.name || "Sem categoria"} · ${occurredAt}`,
+      amount: signedAmount,
+      icon: transaction.category?.icon || (transaction.type === "INCOME" ? "wallet" : "receipt"),
+      status: String(transaction.status || "").toLowerCase()
+    };
+  });
+}
+
 function setAuthMode(mode) {
   state.auth = mode;
   state.authError = "";
@@ -244,6 +293,7 @@ async function handleAuthSubmit(event) {
         state.tutorial = { active: true, index: 0 };
         localStorage.removeItem(tutorialStorageKey(result.user));
       }
+      await loadUserData();
       render();
     }
     showToast(isSignup ? "Conta criada com sucesso" : "Login realizado");
@@ -262,6 +312,7 @@ function logout() {
   state.auth = "login";
   state.authError = "";
   adminState.data = { users: [], accounts: [], categories: [], transactions: [] };
+  state.userData = { accounts: [], categories: [], transactions: [] };
   render();
 }
 
@@ -544,6 +595,10 @@ function loadingView() {
 }
 
 function hero() {
+  const balance = accountBalanceTotal();
+  const income = transactionAmountTotal("INCOME");
+  const expenses = transactionAmountTotal("EXPENSE");
+  const hasData = state.userData.accounts.length || state.userData.transactions.length;
   const cards = state.generatedInsight ? [
     ...feedCards,
     { type: "violet", icon: "sparkles", time: "Novo", title: "Insight gerado agora.", text: "A IA cruzou delivery, mercado e transporte e sugeriu um limite semanal mais confortável.", action: "Aplicar limite" }
@@ -917,6 +972,153 @@ function authScreen2() {
   `;
 }
 
+function hero() {
+  const balance = accountBalanceTotal();
+  const income = transactionAmountTotal("INCOME");
+  const expenses = transactionAmountTotal("EXPENSE");
+  const hasData = state.userData.accounts.length || state.userData.transactions.length;
+
+  return `
+    <section class="hero-summary">
+      <div class="hero-top">
+        <div>
+          <p class="eyebrow">Resumo inteligente</p>
+          <h1>Sua vida financeira em modo feed.</h1>
+          <p>Dados privados deste perfil, carregados exclusivamente da conta logada.</p>
+        </div>
+        <div class="button-row">
+          <button class="secondary-button" onclick="openModal('banco')">${icon("bank", "inline-icon")} Conectar banco</button>
+          <button class="primary-button" onclick="openModal('insight')">${icon("sparkles", "inline-icon")} Gerar insight</button>
+        </div>
+      </div>
+      <div class="hero-grid">
+        ${metric("Saldo atual", money.format(balance), `${state.userData.accounts.length} conta(s)`)}
+        ${metric("Entradas", money.format(income), `${state.userData.transactions.filter(t => t.type === "INCOME").length} lancamento(s)`)}
+        ${metric("Saidas", money.format(expenses), `${state.userData.transactions.filter(t => t.type === "EXPENSE").length} lancamento(s)`, "warn")}
+        ${metric("Risco", hasData ? "Em analise" : "Sem dados", hasData ? "dados exclusivos do perfil" : "historico zerado")}
+      </div>
+    </section>
+  `;
+}
+
+function feedPage() {
+  const content = realFeedCards().length
+    ? realFeedCards().map(feedCard).join("")
+    : emptyState("Historico zerado", "Esta conta ainda nao possui transacoes, contas ou saldos compartilhados.");
+  return `${state.dataError ? `<div class="auth-error" role="alert">${state.dataError}</div>` : ""}${hero()}<section class="content-grid">${content}</section>`;
+}
+
+function realFeedCards() {
+  return state.userData.transactions.slice(0, 5).map(transaction => ({
+    type: transaction.type === "INCOME" ? "good" : transaction.status === "PENDING" ? "warn" : "violet",
+    icon: transaction.category?.icon || (transaction.type === "INCOME" ? "wallet" : "receipt"),
+    time: transaction.occurredAt ? new Date(transaction.occurredAt).toLocaleDateString("pt-BR") : "Sem data",
+    title: transaction.description,
+    text: `${transaction.category?.name || "Sem categoria"} · ${money.format(Number(transaction.amount || 0))}`,
+    action: "Ver transacao"
+  }));
+}
+
+function rightPanel() {
+  const balance = accountBalanceTotal();
+  return `
+    <aside class="right-panel">
+      <div class="balance-box">
+        <span>Saldo conectado</span>
+        <strong>${money.format(balance)}</strong>
+        <small>${state.userData.accounts.length ? "Dados deste perfil" : "Nenhuma conta cadastrada"}</small>
+      </div>
+      <section class="mini-panel">
+        <div class="section-header"><h2>Categorias</h2><button class="mini-button" onclick="setRoute('categorias')">Ver</button></div>
+        <p>${state.userData.categories.length ? `${state.userData.categories.length} categorias deste perfil.` : "Nenhuma categoria compartilhada entre contas."}</p>
+      </section>
+      <section class="mini-panel">
+        <h2>Resumo</h2>
+        <div class="bars">
+          ${bar("Contas", Math.min(state.userData.accounts.length * 20, 100), "blue", String(state.userData.accounts.length))}
+          ${bar("Lancamentos", Math.min(state.userData.transactions.length * 10, 100), "green", String(state.userData.transactions.length))}
+          ${bar("Categorias", Math.min(state.userData.categories.length * 8, 100), "yellow", String(state.userData.categories.length))}
+        </div>
+      </section>
+      <section class="mini-panel">
+        <h2>Privacidade</h2>
+        <p>Cada usuario ve apenas dados criados no proprio perfil autenticado.</p>
+      </section>
+    </aside>
+  `;
+}
+
+function transactionFilter(row) {
+  if (state.transactionTab === "entradas") return row.amount > 0;
+  if (state.transactionTab === "saidas") return row.amount < 0;
+  if (state.transactionTab === "pendentes") return row.status === "pending";
+  return true;
+}
+
+function transactionsPage() {
+  const tabs = [["todas", "Todas"], ["entradas", "Entradas"], ["saidas", "Saidas"], ["pendentes", "Pendentes"]];
+  const filtered = realTransactionRows().filter(transactionFilter);
+  return `<div class="page">
+    ${banner("Transacoes", "Movimentacoes deste perfil.", "Nada aqui e compartilhado com outras contas sem sincronizacao previa.", `<button class="primary-button" onclick="openModal('transacao')">${icon("plus", "inline-icon")} Adicionar</button>`)}
+    <div class="segmented" role="tablist">${tabs.map(([id, label]) => `<button class="tab ${state.transactionTab === id ? "active" : ""}" role="tab" aria-selected="${state.transactionTab === id}" onclick="setTransactionTab('${id}')">${label}</button>`).join("")}</div>
+    <section class="list">${filtered.map(rowTransaction).join("") || emptyState("Historico zerado", "Este perfil ainda nao tem lancamentos.")}</section>
+  </div>`;
+}
+
+function banksPage() {
+  return `<div class="page">
+    ${banner("Contas do perfil", "Armazenamento isolado por usuario.", "Apenas contas cadastradas neste perfil aparecem aqui.", `<button class="primary-button" onclick="openModal('banco')">${icon("bank", "inline-icon")} Nova conta</button>`)}
+    <section class="list">
+      ${state.userData.accounts.map(account => `<button class="bank-row" onclick="showToast('${account.name} aberto')">${icon(account.type === "CASH" ? "wallet" : "bank", "mini-icon")}<span><strong>${account.name}</strong><br><small>${account.institution || account.type}</small></span><span class="amount ${Number(account.balance) >= 0 ? "positive" : "negative"}">${money.format(Number(account.balance || 0))}</span></button>`).join("") || emptyState("Nenhuma conta", "Crie ou sincronize uma conta para iniciar seu historico.")}
+    </section>
+  </div>`;
+}
+
+function categoriesPage() {
+  return `<div class="page">
+    ${banner("Categorias", "Categorias deste perfil.", "Categorias sao carregadas pelo usuario autenticado e nao sao compartilhadas entre contas.", `<button class="secondary-button" onclick="openModal('categoria')">Nova regra</button>`)}
+    <section class="list">${state.userData.categories.map(category => `<button class="category-row" onclick="openModal('categoria')">${icon(category.icon || "chart", "mini-icon")}<span><strong>${category.name}</strong><br><small>${category.type}${category.isDefault ? " · padrao" : ""}</small></span><span class="mini-button">${category.color || "Sem cor"}</span></button>`).join("") || emptyState("Sem categorias", "Este perfil ainda nao possui categorias.")}</section>
+  </div>`;
+}
+
+function daySummary() {
+  const income = transactionAmountTotal("INCOME");
+  const expenses = transactionAmountTotal("EXPENSE");
+  return `<div class="page">
+    ${banner("Resumo do dia", "Dados exclusivos da conta.", "O resumo usa apenas movimentacoes vinculadas ao usuario logado.", "")}
+    <div class="cards-grid">${metric("Entradas", money.format(income), "perfil atual")}${metric("Saidas", money.format(expenses), "perfil atual", "warn")}${metric("Lancamentos", String(state.userData.transactions.length), "sem dados compartilhados")}</div>
+    ${realFeedCards().map(feedCard).join("") || emptyState("Historico zerado", "Nenhum evento financeiro foi criado neste perfil.")}
+  </div>`;
+}
+
+function calendarPage() {
+  return `<div class="page">
+    ${banner("Calendario financeiro", "Agenda deste perfil.", "Eventos e vencimentos aparecem somente depois de criados ou sincronizados nesta conta.", `<button class="secondary-button" onclick="openModal('evento')">Novo evento</button>`)}
+    ${emptyState("Calendario zerado", "Nenhum vencimento ou previsao foi criada para este usuario.")}
+  </div>`;
+}
+
+function goalsPage() {
+  return `<div class="page">
+    ${banner("Metas financeiras", "Metas deste perfil.", "Cada usuario tera suas proprias metas quando elas forem criadas.", `<button class="primary-button" onclick="openModal('meta')">${icon("plus", "inline-icon")} Nova meta</button>`)}
+    ${emptyState("Sem metas", "Este perfil ainda nao possui metas financeiras.")}
+  </div>`;
+}
+
+function reportsPage() {
+  return `<div class="page">
+    ${banner("Relatorios", "Relatorios deste perfil.", "Analises dependem dos dados criados exclusivamente pelo usuario logado.", "")}
+    ${state.userData.transactions.length ? `<section class="cards-grid">${metric("Transacoes", String(state.userData.transactions.length), "perfil atual")}${metric("Entradas", money.format(transactionAmountTotal("INCOME")), "perfil atual")}${metric("Saidas", money.format(transactionAmountTotal("EXPENSE")), "perfil atual", "warn")}</section>` : emptyState("Sem relatorios", "Nao ha transacoes suficientes neste perfil para gerar analises.")}
+  </div>`;
+}
+
+function planningPage() {
+  return `<div class="page">
+    ${banner("Planejamento financeiro", "Cenarios deste perfil.", "Simulacoes partem de saldo e movimentacoes do usuario atual.", `<button class="primary-button" onclick="openModal('planejamento')">Simular</button>`)}
+    <section class="cards-grid">${metric("Saldo base", money.format(accountBalanceTotal()), "perfil atual")}${metric("Entradas", money.format(transactionAmountTotal("INCOME")), "perfil atual")}${metric("Saidas", money.format(transactionAmountTotal("EXPENSE")), "perfil atual", "warn")}</section>
+  </div>`;
+}
+
 function adminLoginScreen() {
   return `
     <main class="admin-screen">
@@ -1160,3 +1362,6 @@ Object.assign(window, {
 
 render();
 if (state.route === "admin" && state.user?.role === "ADMIN") adminLoad();
+if (state.route !== "admin" && state.user) {
+  loadUserData().then(render);
+}

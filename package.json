@@ -13,8 +13,9 @@
     "db:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
     "db:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma",
     "db:seed": "node backend/scripts/seed.js",
+    "build:static": "node scripts/build-static.js",
     "start": "node backend/src/server.js",
-    "vercel-build": "npm run db:generate && npm run check"
+    "vercel-build": "npm run db:generate && npm run check && npm run build:static"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

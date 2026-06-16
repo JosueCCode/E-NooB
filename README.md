@@ -18,7 +18,7 @@
 
 ## Variaveis de ambiente
 
-- `DATABASE_URL`: conexao PostgreSQL usada pelo Prisma.
+- `DATABASE_URL`: conexao PostgreSQL usada pelo Prisma. Em Vercel Postgres, tambem sao aceitas `POSTGRES_PRISMA_URL`, `POSTGRES_URL` ou `POSTGRES_URL_NON_POOLING`.
 - `JWT_SECRET`: chave longa e segura para assinar JWT.
 - `JWT_EXPIRES_IN`: validade do token, por padrao `7d`.
 - `CORS_ORIGIN`: origens permitidas separadas por virgula.
@@ -47,7 +47,7 @@ Credencial local padrao do seed:
 ## Deploy Vercel
 
 1. Configure as variaveis de ambiente no projeto da Vercel.
-2. Use PostgreSQL acessivel pela Vercel em `DATABASE_URL`.
+2. Use PostgreSQL acessivel pela Vercel em `DATABASE_URL` ou conecte Vercel Postgres ao projeto para receber `POSTGRES_PRISMA_URL`/`POSTGRES_URL`.
 3. Rode `npm run db:deploy` antes ou durante o deploy para aplicar migrations.
 4. Rode `npm run db:seed` uma vez para criar o usuario admin.
 5. O `vercel.json` redireciona `/api/*` para a API serverless e `/admin` para o frontend.

@@ -871,6 +871,7 @@ function adminLayout() {
       <header class="admin-header">
         <div><p class="eyebrow">Admin</p><h1>CRUD de testes</h1><p>Dados ficticios no PostgreSQL via Prisma.</p></div>
         <div class="button-row">
+          <button class="secondary-button" onclick="goHome()">Inicio</button>
           <button class="secondary-button" onclick="adminLoad()">Atualizar</button>
           <button class="ghost-button" onclick="logout()">Sair</button>
         </div>
@@ -988,6 +989,14 @@ function adminShortcut() {
   return `<a class="admin-shortcut" href="/admin" onclick="openAdminLogin(event)" title="Abrir E-NooB ADM">E-NooB ADM</a>`;
 }
 
+function goHome() {
+  window.history.pushState({}, "", "/");
+  state.route = state.user ? "feed" : "auth";
+  adminState.error = "";
+  adminState.editing = null;
+  render();
+}
+
 function openAdminLogin(event) {
   event.preventDefault();
   localStorage.removeItem("casa-clara-token");
@@ -1026,6 +1035,7 @@ Object.assign(window, {
   adminCancelEdit,
   adminSubmit,
   adminDelete,
+  goHome,
   openAdminLogin,
   render,
   state

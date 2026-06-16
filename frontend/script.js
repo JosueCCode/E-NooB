@@ -985,7 +985,22 @@ function render() {
 }
 
 function adminShortcut() {
-  return `<a class="admin-shortcut" href="/admin" title="Abrir E-NooB ADM">E-NooB ADM</a>`;
+  return `<a class="admin-shortcut" href="/admin" onclick="openAdminLogin(event)" title="Abrir E-NooB ADM">E-NooB ADM</a>`;
+}
+
+function openAdminLogin(event) {
+  event.preventDefault();
+  localStorage.removeItem("casa-clara-token");
+  localStorage.removeItem("casa-clara-user");
+  state.user = null;
+  state.route = "admin";
+  state.auth = "login";
+  state.authError = "";
+  adminState.error = "";
+  adminState.editing = null;
+  adminState.data = { users: [], accounts: [], categories: [], transactions: [] };
+  window.history.pushState({}, "", "/admin");
+  render();
 }
 
 document.addEventListener("keydown", event => {
@@ -1011,6 +1026,7 @@ Object.assign(window, {
   adminCancelEdit,
   adminSubmit,
   adminDelete,
+  openAdminLogin,
   render,
   state
 });
